@@ -1,0 +1,121 @@
+Question 2A:
+
+cl.filter(cl['IsOfficial'] =='T').groupBy('Language').agg(fc.count('*').alias('cnt')).orderBy('cnt', ascending=False).show(10, False)
++----------+---+
+|Language  |cnt|
++----------+---+
+|English   |44 |
+|Arabic    |22 |
+|Spanish   |20 |
+|French    |18 |
+|Portuguese|6  |
+|German    |6  |
+|Dutch     |4  |
+|Malay     |4  |
+|Italian   |4  |
+|Danish    |3  |
++----------+---+
+only showing top 10 rows
+
+Question 2B:
+
+countryCity = country.join(city, country.Capital == city.ID)
+countryCity.select(country.Name,city.Name).filter(countryCity['Continent'] == 'North America').where(countryCity['GNP'] >= 100000).show()
++-------------+-----------------+
+|         Name|             Name|
++-------------+-----------------+
+|       Canada|           Ottawa|
+|       Mexico|Ciudad de MÃ©xico|
+|United States|       Washington|
++-------------+-----------------+
+
+Question 2C:
+
+CCL = cl.join(country, cl.CountryCode == country.Code)
+CCL.filter(CCL['Continent'] == 'North America').select(CCL.Name).where(CCL['Language'] == 'English').where(CCL['IsOfficial'] == 'T').show(truncate=False)
++--------------------------------+
+|Name                            |
++--------------------------------+
+|Anguilla                        |
+|Antigua and Barbuda             |
+|Belize                          |
+|Bermuda                         |
+|Barbados                        |
+|Canada                          |
+|Cayman Islands                  |
+|Saint Kitts and Nevis           |
+|Saint Lucia                     |
+|Montserrat                      |
+|Turks and Caicos Islands        |
+|United States                   |
+|Saint Vincent and the Grenadines|
+|Virgin Islands, British         |
+|Virgin Islands, U.S.            |
++--------------------------------+
+
+Question 2D:
+
+city.filter(city['CountryCode'] == 'USA').select(fc.max("Population")).show()
++---------------+
+|max(Population)|
++---------------+
+|        8008278|
++---------------+
+
+Question 2E:
+
+English = cl.filter(cl['Language'] == 'English').select('CountryCode').where(cl['IsOfficial'] == 'T')
+French = cl.filter(cl['Language'] == 'French').select('CountryCode').where(cl['IsOfficial'] == 'T')
+English.intersectAll(French).show()
++-----------+
+|CountryCode|
++-----------+
+|        VUT|
+|        SYC|
+|        CAN|
++-----------+
+
+Question 3A:
+
+country_rdd.filter(lambda r: r['GNP'] >= 10000 and r['GNP'] <= 20000).count()
+
+Ans: 20
+
+Question 3B:
+
+country_rdd.map(lambda r: (r['Continent'],r['GNP'])).reduceByKey(lambda U, x:max(U,x)).collect()
+
+[('North America', 8510700.0), ('Asia', 3787042.0), ('Africa', 116729.0), ('Europe', 2133367.0), ('South America', 776739.0), ('Oceania', 351182.0), ('Antarctica', 0.0)]
+
+Question 3C:
+
+>>> country = spark.read.json('country.json')
+>>> city = sparl.read.json('city.json') 
+>>> country1 = country.withColumnRenamed('Name','CountryName')
+>>> CC = country1.join(city, country1.Capital == city.ID)
+>>> CC_rdd = CC.rdd
+>>> CC_rdd.map(lambda r:(r['CountryName'],r['Name'])).sortByKey(False).take(20)
+
+[('Zimbabwe', 'Harare'), ('Zambia', 'Lusaka'), ('Yugoslavia', 'Beograd'), ('Yemen', 'Sanaa'), ('Western Sahara', 'El-AaiÃºn'), ('Wallis and Futuna', 'Mata-Utu'), ('Virgin Islands, U.S.', 'Charlotte Amalie'), ('Virgin Islands, British', 'Road Town'), ('Vietnam', 'Hanoi'), ('Venezuela', 'Caracas'), ('Vanuatu', 'Port-Vila'), ('Uzbekistan', 'Toskent'), ('Uruguay', 'Montevideo'), ('United States', 'Washington'), ('United Kingdom', 'London'), ('United Arab Emirates', 'Abu Dhabi'), ('Ukraine', 'Kyiv'), ('Uganda', 'Kampala'), ('Tuvalu', 'Funafuti'), ('Turks and Caicos Islands', 'Cockburn Town')]
+
+
+Question 3D:
+
+city_rdd.filter(lambda r: r['CountryCode'] =='USA').map(lambda r:(r['CountryCode'],r['Population'])).reduceByKey(lambda U,x:max(U,x)).collect()
+
+[('USA', 8008278)]
+
+Question 3E:
+
+cl = spark.read.json('countrylanguage.json')
+cl_rdd = cl.rdd
+>>> cl_rdd_Official_English = sc.parallelize(cl_rdd.filter(lambda r:r['IsOfficial'] == 'T').filter(lambda r:r['Language'] =='English').map(lambda r: r['CountryCode']).collect())
+>>> cl_rdd_Official_French = sc.parallelize(cl_rdd.filter(lambda r:r['IsOfficial'] == 'T').filter(lambda r:r['Language'] =='French').map(lambda r: r['CountryCode']).collect())
+>>> cl_rdd_Official_English.intersection(cl_rdd_Official_French).collect()
+['CAN', 'SYC', 'VUT']
+
+
+
+
+
+
